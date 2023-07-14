@@ -20,10 +20,13 @@ class Round:
         self.matches = matches or []
 
 class Tournament:
-    def __init__(self, name, location, start_date, end_date, rounds=None, players=None):
+    def __init__(self, index, name, location, start_date, end_date, rounds, players):
+        self.index = index
         self.name = name
         self.location = location
         self.start_date = start_date
         self.end_date = end_date
-        self.rounds = rounds or []
-        self.players = players or []
+        self.rounds = rounds
+        self.players = players
+
+

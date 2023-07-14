@@ -2,23 +2,31 @@
 
 from models import Player, Tournament, Round, Match
 import os
-
+import re
+from datetime import datetime
 
 class PlayerListView:
     def display_players(self, players):
         print("Liste des Joueurs :")
         for player in players:
-           print(f"- {player.first_name} - {player.last_name} - {player.date_of_birth.strftime('%Y-%m-%d')} - ({player.chess_id})")
-
-        print()  
-
+            print(f"- {player.first_name} - {player.last_name} - {player.date_of_birth.strftime('%Y-%m-%d')} - ({player.chess_id})")
+        print()
 
 
 class TournamentListView:
     def display_tournaments(self, tournaments):
         print("Liste des Tournois :")
-        for index, tournament in enumerate(tournaments):
-            print(f"{index}. {tournament.name}")
+        for i, tournament in enumerate(tournaments):
+            print(f"Index: {tournament.index}")
+            print(f"Nom: {tournament.name}")
+            print(f"Lieu: {tournament.location}")
+            print(f"Date de début: {tournament.start_date.strftime('%d-%m-%Y')}")
+            print(f"Date de fin: {tournament.end_date.strftime('%d-%m-%Y')}")
+            print(f"Rounds: {tournament.rounds}")
+            print("Joueurs :")
+            for player in tournament.players:
+                print(f"- {player.first_name} {player.last_name} ({player.date_of_birth.strftime('%d-%m-%Y')})")
+            print()
 
 
 class TournamentDetailView:
@@ -43,11 +51,11 @@ class MenuView:
     def run(self):
         while True:
             print("Menu Principal:")
-            print("1. Créer une Liste de Joueurs")
+            print("1. Enregistrement de la liste de Joueurs")
             print("2. Afficher la Liste des Joueurs")
             print("3. Créer un Tournoi")
             print("4. Ajouter un Joueur au Tournoi")
-            print("5. Générer les Rounds d'un Tournoi")
+            print("5. Générer les Roundes d'un Tournoi")
             print("6. Enregistrer le Résultat d'un Match")
             print("7. Afficher la Liste des Tournois")
             print("8. Afficher les Détails d'un Tournoi")
@@ -75,6 +83,18 @@ class MenuView:
                 break
             else:
                 print("Entrée invalide. Veuillez réessayer.")
+
+    def create_tournament(self):
+        nom = input("Entrez le nom du tournoi : ")
+        lieu = input("Entrez le lieu du tournoi : ")
+        date_debut = input("Entrez la date de début du tournoi : ")
+        date_fin = input("Entrez la date de fin du tournoi : ")
+        tournoi = self.tournament_controller.create_tournament(nom, lieu, date_debut, date_fin)
+        print(f"Tournoi '{tournoi.name}' créé !")
+
+    def display_tournaments(self):
+        tournaments = self.tournament_controller.get_tournaments()
+        self.tournament_list_view.display_tournaments(tournaments)
 
     def create_player_list(self):
         print("Création de la Liste de Joueurs")
@@ -106,42 +126,18 @@ class MenuView:
         joueurs = self.tournament_controller.get_players()
         self.player_list_view.display_players(joueurs)
 
-    def create_tournament(self):
-        nom = input("Entrez le nom du tournoi : ")
-        lieu = input("Entrez le lieu du tournoi : ")
-        date_debut = input("Entrez la date de début du tournoi : ")
-        date_fin = input("Entrez la date de fin du tournoi : ")
-        tournoi = self.tournament_controller.create_tournament(nom, lieu, date_debut, date_fin)
-        print(f"Tournoi '{tournoi.name}' créé !")
+        def create_tournament(self):
+            nom = input("Entrez le nom du tournoi : ")
+            lieu = input("Entrez le lieu du tournoi : ")
+            date_debut = input("Entrez la date de début du tournoi (JJ-MM-AAAA) : ")
+            date_fin = input("Entrez la date de fin du tournoi (JJ-MM-AAAA) : ")
 
-    def add_player_to_tournament(self):
-        tournois = self.tournament_controller.get_tournaments()
-        self.tournament_list_view.display_tournaments(tournois)
-        index_tournoi = int(input("Entrez l'index du tournoi auquel ajouter un joueur : "))
-        prenom_joueur = input("Entrez le prénom du joueur : ")
-        nom_joueur = input("Entrez le nom du joueur : ")
-        joueur = self.tournament_controller.add_player_to_tournament(index_tournoi, prenom_joueur, nom_joueur)
-        print(f"Joueur '{joueur.first_name} {joueur.last_name}' ajouté au tournoi.")
+            try:
+                start_date = datetime.strptime(date_debut, "%d-%m-%Y")
+                end_date = datetime.strptime(date_fin, "%d-%m-%Y")
+            except ValueError:
+                print("Format de date invalide. Veuillez utiliser le format JJ-MM-AAAA.")
+                return
 
-    def generate_rounds(self):
-        tournois = self.tournament_controller.get_tournaments()
-        self.tournament_list_view.display_tournaments(tournois)
-        index_tournoi = int(input("Entrez l'index du tournoi pour générer les rounds : "))
-        self.tournament_controller.generate_rounds(index_tournoi)
-        print("Rounds générés pour le tournoi.")
-
-    def record_match_result(self):
-        # Logique pour enregistrer le résultat d'un match
-        pass
-
-    def display_tournaments(self):
-        tournois = self.tournament_controller.get_tournaments()
-        self.tournament_list_view.display_tournaments(tournois)
-
-    def display_tournament_details(self):
-        tournois = self.tournament_controller.get_tournaments()
-        self.tournament_list_view.display_tournaments(tournois)
-        index_tournoi = int(input("Entrez l'index du tournoi pour afficher les détails : "))
-        tournoi = tournois[index_tournoi]
-        self.tournament_detail_view.display_rounds(tournoi.rounds)
-        self.tournament_detail_view.display_matches(tournoi.rounds[-1].matches)  # Afficher les matchs du dernier round
+            tournoi = self.tournament_controller.create_tournament(nom, lieu, start_date, end_date)
+            print(f"Tournoi '{tournoi.name}' créé !")
