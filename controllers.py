@@ -1,7 +1,5 @@
 # Controllers.py
 
-
-
 import os
 import json
 from datetime import datetime
@@ -16,51 +14,10 @@ os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(TOURNOIS_DIR, exist_ok=True)
 os.makedirs(JOUEURS_DIR, exist_ok=True)
 
-class TournamentController:
+class PlayerController:
     def __init__(self):
         self.players = []
-        self.tournaments = []
         self.load_players_from_file()
-        self.load_tournaments_from_file()
-
-    def create_tournament(self, name, location, date_debut, date_fin, number_of_rounds=4):
-        tournament_id = self.generate_tournament_id()
-        start_date = date_debut
-        end_date = date_fin
-        tournament = Tournament(tournament_id, name, location, start_date, end_date, number_of_rounds)
-        self.tournaments.append(tournament)
-        self.save_tournaments_to_file()
-        return tournament
-
-    def generate_tournament_id(self):
-        tournament_count = len(self.tournaments)
-        tournament_id = f"T{tournament_count + 1}"
-        return tournament_id
-
-    def save_tournaments_to_file(self):
-        tournaments = [tournament.__dict__ for tournament in self.tournaments]
-        filepath = os.path.join(TOURNOIS_DIR, "tournois.json")
-
-        with open(filepath, "w") as file:
-            json.dump(tournaments, file, indent=4)
-
-    def load_tournaments_from_file(self):
-        filepath = os.path.join(TOURNOIS_DIR, "tournois.json")
-        if os.path.isfile(filepath):
-            with open(filepath, "r") as file:
-                tournaments_data = json.load(file)
-                for tournament_data in tournaments_data:
-                    tournament_id = tournament_data["tournament_id"]
-                    name = tournament_data["name"]
-                    location = tournament_data["location"]
-                    start_date = datetime.strptime(tournament_data["start_date"], "%d/%m/%Y")
-                    end_date = datetime.strptime(tournament_data["end_date"], "%d/%m/%Y")
-                    number_of_rounds = tournament_data.get("number_of_rounds", 4)
-                    tournament = Tournament(tournament_id, name, location, start_date, end_date, number_of_rounds)
-                    self.tournaments.append(tournament)
-
-    def get_tournaments(self):
-        return self.tournaments
 
     def add_player(self, first_name, last_name, date_of_birth, chess_id):
         player = Player(first_name, last_name, date_of_birth, chess_id)
@@ -97,3 +54,101 @@ class TournamentController:
                     chess_id = player_data["chess_id"]
                     player = Player(first_name, last_name, date_of_birth, chess_id)
                     self.players.append(player)
+
+
+class TournamentController:
+    def __init__(self):
+        self.tournaments = []
+        self.load_tournaments_from_file()
+
+    def create_tournament(self, name, location, start_date, end_date, number_of_rounds=4):
+        tournament_id = self.generate_tournament_id()
+        start_date = datetime.strptime(start_date, "%d/%m/%Y")
+        end_date = datetime.strptime(end_date, "%d/%m/%Y")
+        tournament = Tournament(tournament_id, name, location, start_date, end_date, number_of_rounds)
+        self.tournaments.append(tournament)
+        self.save_tournaments_to_file()
+        return tournament
+
+    def get_tournaments(self):
+        return self.tournaments
+
+    def load_tournaments_from_file(self):
+        filepath = os.path.join(TOURNOIS_DIR, "tournois.json")
+        if os.path.isfile(filepath):
+            with open(filepath, "r") as file:
+                tournaments_data = json.load(file)
+                for tournament_data in tournaments_data:
+                    tournament = Tournament(
+                        tournament_data["tournament_id"],
+                        tournament_data["name"],
+                        tournament_data["location"],
+                        datetime.strptime(tournament_data["start_date"], "%d/%m/%Y"),
+                        datetime.strptime(tournament_data["end_date"], "%d/%m/%Y"),
+                        tournament_data.get("number_of_rounds", 4)
+                    )
+                    self.tournaments.append(tournament)
+
+    def select_tournament(self, tournament_id):
+        tournaments = self.get_tournaments()
+        for tournament in tournaments:
+            if tournament.tournament_id == tournament_id:
+                return tournament
+        return None
+
+
+    def save_tournaments_to_file(self):
+        tournaments = [tournament.__dict__ for tournament in self.tournaments]
+        filepath = os.path.join(TOURNOIS_DIR, "tournois.json")
+
+        with open(filepath, "w") as file:
+            json.dump(tournaments, file, indent=4, default=datetime_to_string)
+
+def datetime_to_string(obj):
+    if isinstance(obj, datetime):
+        return obj.strftime("%d-%m-%Y")
+    raise TypeError(f"Object of type {obj.__class__.__name__} is not JSON serializable")
+
+class TournamentListView:
+    def display_tournaments(self, tournament_controller):
+        tournaments = tournament_controller.get_tournaments()
+        if not tournaments:
+            print("Aucun tournoi enregistré.")
+        else:
+            print("Liste des Tournois :")
+            for tournament in tournaments:
+                print(f"Identifiant: {tournament.tournament_id}")
+                print(f"Nom: {tournament.name}")
+                print(f"Lieu: {tournament.location}")
+                print(f"Date de début: {tournament.start_date.strftime('%Y-%m-%d')}")
+                print(f"Date de fin: {tournament.end_date.strftime('%Y-%m-%d')}")
+                print(f"Nombre de tours: {tournament.number_of_rounds}")
+                print()
+
+    def generate_tournament_id(self):
+                tournament_count = len(self.tournaments)
+                tournament_id = f"T{tournament_count + 1}"
+                return tournament_id
+
+    def save_tournaments_to_file(self):
+        tournaments = [tournament.__dict__ for tournament in self.tournaments]
+        filepath = os.path.join(TOURNOIS_DIR, "tournois.json")
+
+        with open(filepath, "w") as file:
+            json.dump(tournaments, file, indent=4, default=datetime_to_string)
+
+    def load_tournaments_from_file(self):
+        filepath = os.path.join(TOURNOIS_DIR, "tournois.json")
+        if os.path.isfile(filepath):
+            with open(filepath, "r") as file:
+                tournaments_data = json.load(file)
+                for tournament_data in tournaments_data:
+                    tournament = Tournament(
+                        tournament_data["tournament_id"],
+                        tournament_data["name"],
+                        tournament_data["location"],
+                        datetime.strptime(tournament_data["start_date"], "%d/%m/%Y"),
+                        datetime.strptime(tournament_data["end_date"], "%d/%m/%Y"),
+                        tournament_data.get("number_of_rounds", 4)
+                    )
+                    self.tournaments.append(tournament)
