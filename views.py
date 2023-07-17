@@ -5,6 +5,16 @@ import json
 import os
 from datetime import datetime
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(BASE_DIR, "Data")
+TOURNOIS_DIR = os.path.join(DATA_DIR, "tournois")
+JOUEURS_DIR = os.path.join(DATA_DIR, "joueurs")
+
+os.makedirs(DATA_DIR, exist_ok=True)
+os.makedirs(TOURNOIS_DIR, exist_ok=True)
+os.makedirs(JOUEURS_DIR, exist_ok=True)
+
+
 class PlayerListView:
     def create_player_list(self, player_controller):
         print("Création de la Liste de Joueurs")
@@ -62,16 +72,14 @@ class TournamentCreationView:
 class TournamentListView:
     def display_tournaments(self, tournament_controller):
         tournaments = tournament_controller.get_tournaments()
-        if not tournaments:
-            print("Aucun tournoi enregistré.")
-        else:
-            print("Liste des Tournois :")
-            for tournament in tournaments:
+
+        print("Liste des Tournois :")
+        for tournament in tournaments:
                 print(f"Identifiant: {tournament.tournament_id}")
                 print(f"Nom: {tournament.name}")
                 print(f"Lieu: {tournament.location}")
-                print(f"Date de début: {tournament.start_date.strftime('%d-%m-%Y')}")
-                print(f"Date de fin: {tournament.end_date.strftime('%d-%m-%Y')}")
+                print(f"Date de début: {tournament.start_date.strftime('%d/%m/%Y')}")
+                print(f"Date de fin: {tournament.end_date.strftime('%d/%m/%Y')}")
                 print(f"Nombre de tours: {tournament.number_of_rounds}")
                 print()
 
@@ -79,7 +87,7 @@ class TournamentListView:
         tournament_id = input("Spécifiez l'identifiant du tournoi ('q' pour quitter) : ")
         if tournament_id.lower() == "q":
             return None
-        tournament = tournament_controller.get_tournament_by_id(tournament_id)
+        tournament = tournament_controller.select_tournament(tournament_id)
         if tournament is None:
             print("Aucun tournoi trouvé avec cet identifiant.")
         return tournament
@@ -89,54 +97,21 @@ class TournamentListView:
         print(f"Liste des joueurs pour le tournoi '{tournament.name}' :")
         players = tournament.get_players()
         for player in players:
-            print(f"Nom: {player['first_name']} {player['last_name']}")
-            print(f"Date de naissance: {player['date_of_birth']}")
-            print(f"ID Échecs: {player['chess_id']}")
-            print()
-
-    def manage_tournament(self, tournament_controller):
-        tournament_id = input("Spécifiez l'identifiant du tournoi : ")
-        tournament = tournament_controller.get_tournament_by_id(tournament_id)
-        if tournament is None:
-            print("Aucun tournoi trouvé avec cet identifiant.")
-            return
-        self.display_players(tournament)
-
-    def create_player_list(self, player_controller):
-        print("Création de la Liste de Joueurs")
-        while True:
-            print("Entrez les informations du joueur ('q' pour quitter) :")
-            nom_joueur = input("Nom du joueur : ")
-            if nom_joueur.lower() == "q":
-                break
-            prenom_joueur = input("Prénom du joueur : ")
-            date_naissance_joueur = input("Date de Naissance du joueur (JJ-MM-AAAA) : ")
-            identifiant_echec = input("Identifiant Echec du joueur (2 lettres majuscules + 5 chiffres) : ")
-
-            if not re.match(r"^[A-Z]{2}\d{5}$", identifiant_echec):
-                print("L'identifiant Echec doit contenir 2 lettres majuscules suivies de 5 chiffres.")
-                continue
-
-            try:
-                date_naissance = datetime.strptime(date_naissance_joueur, "%d-%m-%Y")
-            except ValueError:
-                print("Format de date invalide. Veuillez utiliser le format JJ-MM-AAAA.")
-                continue
-
-            player_controller.add_player(nom_joueur, prenom_joueur, date_naissance, identifiant_echec)
-            print("Joueur ajouté à la liste.")
-
-    def display_player_list(self, player_controller):
-        players = player_controller.get_players()
-        print("Liste des Joueurs :")
-        for player in players:
             print(f"Nom: {player.first_name} {player.last_name}")
             print(f"Date de naissance: {player.date_of_birth.strftime('%d-%m-%Y')}")
             print(f"ID Échecs: {player.chess_id}")
             print()
 
+    def manage_tournament(self, tournament_controller):
+        tournament_id = input("Spécifiez l'identifiant du tournoi : ")
+        tournament = tournament_controller.select_tournament(tournament_id)
+        if tournament is None:
+            print("Aucun tournoi trouvé avec cet identifiant.")
+            return
+        self.display_players(tournament)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "Data")
 JOUEURS_DIR = os.path.join(DATA_DIR, "joueurs")
 os.makedirs(JOUEURS_DIR, exist_ok=True)
+
