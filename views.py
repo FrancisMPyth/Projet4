@@ -5,21 +5,17 @@ import json
 from datetime import datetime
 from controllers import PlayerController, TournamentController
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(BASE_DIR, "Data")
+TOURNOIS_DIR = os.path.join(DATA_DIR, "tournois")
+JOUEURS_DIR = os.path.join(DATA_DIR, "joueurs")
+
+os.makedirs(DATA_DIR, exist_ok=True)
+os.makedirs(TOURNOIS_DIR, exist_ok=True)
+os.makedirs(JOUEURS_DIR, exist_ok=True)
+
+
 class PlayerListView:
-    def create_player_list(self, player_controller):
-        print("Enregistrement des Joueurs :")
-        while True:
-            first_name = input("Prénom : ")
-            last_name = input("Nom : ")
-            date_of_birth = datetime.strptime(input("Date de naissance (jj/mm/aaaa) : "), "%d/%m/%Y")
-            chess_id = input("Identifiant : ")
-
-            player_controller.add_player(first_name, last_name, date_of_birth, chess_id)
-
-            choice = input("Voulez-vous ajouter un autre joueur ? (O/N) : ")
-            if choice.lower() != "o":
-                break
-
     def display_player_list(self, player_controller):
         players = player_controller.get_players()
         print("Liste des Joueurs :")
@@ -41,6 +37,7 @@ class TournamentCreationView:
         tournament = tournament_controller.create_tournament(name, location, start_date, end_date)
         print(f"Le tournoi '{tournament.name}' a été enregistré avec succès.")
 
+
 class TournamentListView:
     def display_tournaments(self, tournament_controller):
         tournaments = tournament_controller.get_tournaments()
@@ -54,14 +51,14 @@ class TournamentListView:
             print(f"Nombre de tours: {tournament.number_of_rounds}")
             print()
 
-        def display_players(self, tournament):
-            print(f"Liste des joueurs pour le tournoi '{tournament.name}' :")
-            players = tournament.players
-            for player in players:
-                print(f"Nom: {player.first_name} {player.last_name}")
-                print(f"Date de naissance: {player.date_of_birth.strftime('%d/%m/%Y')}")
-                print(f"Identifiant: {player.chess_id}")
-                print()
+    def display_players(self, tournament):
+        print(f"Liste des joueurs pour le tournoi '{tournament.name}' :")
+        players = tournament.players
+        for player in players:
+            print(f"Nom: {player.first_name} {player.last_name}")
+            print(f"Date de naissance: {player.date_of_birth.strftime('%d/%m/%Y')}")
+            print(f"Identifiant: {player.chess_id}")
+            print()
 
     def save_tournament_to_file(self, tournament):
         filepath = os.path.join(TOURNOIS_DIR, f"{tournament.name}.json")
@@ -85,6 +82,7 @@ class TournamentListView:
             }
             json.dump(tournament_data, file, indent=4)
 
+
 def main():
     player_controller = PlayerController()
     tournament_controller = TournamentController()
@@ -98,6 +96,7 @@ def main():
         print("2. Afficher la liste des joueurs")
         print("3. Enregistrer un tournoi")
         print("4. Afficher la liste des tournois")
+        print("5. Gestion des Tournois")
         print("q. Quitter")
 
         choix = input("Entrez votre choix : ")
@@ -111,19 +110,49 @@ def main():
         elif choix == "4":
             tournament_list_view.display_tournaments(tournament_controller)
         elif choix == "5":
-            tournament_list_view.display_tournaments(tournament_controller)
-            tournament_id = input("Spécifiez l'identifiant du tournoi ('q' pour quitter) : ")
-            if tournament_id.lower() == "q":
-                continue
-            tournament = tournament_controller.select_tournament(tournament_id)
-            if tournament is not None:
-                tournament_list_view.display_players(tournament)
-                tournament_list_view.save_tournament_to_file(tournament)
-                print(f"Le tournoi '{tournament.name}' a été enregistré dans un fichier.")
+            while True:
+                print("\nGestion des Tournois:")
+                print("1. Choix du Tournoi")
+                print("2. Afficher les détails d'un tournoi")
+                print("3. Enregistrer un tournoi dans un fichier")
+                print("4. Retour au menu principal")
+
+                sous_choix = input("Entrez votre choix : ")
+
+                if sous_choix == "1":
+                    tournament_list_view.display_tournaments(tournament_controller)
+                    tournament_id = input("Spécifiez l'identifiant du tournoi ('q' pour quitter) : ")
+                    if tournament_id.lower() == "q":
+                        break
+                    tournament = tournament_controller.select_tournament(tournament_id)
+                    if tournament is not None:
+                        tournament_list_view.display_players(tournament)
+                elif sous_choix == "2":
+                    tournament_list_view.display_tournaments(tournament_controller)
+                    tournament_id = input("Spécifiez l'identifiant du tournoi ('q' pour quitter) : ")
+                    if tournament_id.lower() == "q":
+                        break
+                    tournament = tournament_controller.select_tournament(tournament_id)
+                    if tournament is not None:
+                        tournament_list_view.display_tournament_details(tournament)
+                elif sous_choix == "3":
+                    tournament_list_view.display_tournaments(tournament_controller)
+                    tournament_id = input("Spécifiez l'identifiant du tournoi ('q' pour quitter) : ")
+                    if tournament_id.lower() == "q":
+                        break
+                    tournament = tournament_controller.select_tournament(tournament_id)
+                    if tournament is not None:
+                        tournament_list_view.save_tournament_to_file(tournament)
+                        print(f"Le tournoi '{tournament.name}' a été enregistré dans un fichier.")
+                elif sous_choix == "4":
+                    break
+                else:
+                    print("Choix invalide. Veuillez réessayer.")
         elif choix.lower() == "q":
             break
         else:
             print("Choix invalide. Veuillez réessayer.")
+
 
 if __name__ == "__main__":
     main()
