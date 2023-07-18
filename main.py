@@ -1,5 +1,4 @@
 # main.py
-
 import os
 import json
 from datetime import datetime
@@ -19,7 +18,6 @@ def main():
         print("2. Afficher la liste des joueurs")
         print("3. Enregistrer un tournoi")
         print("4. Afficher la liste des tournois")
-        print("5. Gestion de Tournoi")
         print("q. Quitter")
 
         choix = input("Entrez votre choix : ")
@@ -32,14 +30,6 @@ def main():
             tournament_creation_view.create_tournament(tournament_controller)
         elif choix == "4":
             tournament_list_view.display_tournaments(tournament_controller)
-        elif choix == "5":
-            tournament_list_view.display_tournaments(tournament_controller)
-            tournament_id = input("Spécifiez l'identifiant du tournoi ('q' pour quitter) : ")
-            if tournament_id.lower() == "q":
-                continue
-            tournament = tournament_controller.select_tournament(tournament_id)
-            if tournament is not None:
-                tournament_list_view.display_players(tournament)
         elif choix.lower() == "q":
             break
         else:
