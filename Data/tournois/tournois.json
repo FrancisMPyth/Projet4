@@ -1,20 +1,13 @@
 [
     {
         "tournament_id": "T1",
-        "name": "Open",
-        "location": "Paris",
-        "start_date": "07/07/2023",
-        "end_date": "07/07/2023",
-        "number_of_rounds": 4,
-        "players": []
-    },
-    {
-        "tournament_id": "T2",
-        "name": "Rally",
+        "name": "OPen",
         "location": "Rouen",
-        "start_date": "08/07/2023",
-        "end_date": "08/07/2023",
+        "start_date": "23/07/2023",
+        "end_date": "23/07/2023",
         "number_of_rounds": 4,
-        "players": []
+        "players": [
+            "J001"
+        ]
     }
 ]
