@@ -69,97 +69,81 @@ class PlayerController:
         else:
             print("Le fichier des joueurs n'existe pas. Une nouvelle liste de joueurs sera créée.")
 
-
-
-
 class TournamentController:
-    def __init__(self):
-        self.tournaments = []
-        self.load_tournaments_from_file()
-        self.player_controller = PlayerController()
+        def __init__(self, player_controller):
+            self.player_controller = player_controller
+            self.load_tournaments_from_file()
 
-    def create_tournament(self, name, location, start_date, end_date, number_of_rounds=4):
-        tournament_id = self.generate_tournament_id()
-        start_date = datetime.strptime(start_date, "%d/%m/%Y")  # Convertir en objet datetime
-        end_date = datetime.strptime(end_date, "%d/%m/%Y")  # Convertir en objet datetime
+        def create_tournament(self, name, location, start_date_str, end_date_str, number_of_rounds):
+            try:
+                start_date = datetime.strptime(start_date_str, "%d/%m/%Y")  
+                end_date = datetime.strptime(end_date_str, "%d/%m/%Y")  
+            except ValueError:
+                print("Format de date incorrect. Assurez-vous de saisir la date au format jj/mm/aaaa.")
+                return
 
-        tournament = Tournament(tournament_id, name, location, start_date, end_date, number_of_rounds)
+            tournament_id = self.generate_tournament_id()
+            tournament = Tournament(tournament_id, name, location, start_date, end_date, number_of_rounds)
+            self.tournaments.append(tournament)
+            self.save_tournaments_to_file()
 
-        player_ids = input("Entrez les identifiants des joueurs séparés par des virgules : ").split(",")
-        for player_id in player_ids:
-            player = self.player_controller.select_player(player_id.strip())
-            if player:
-                tournament.add_player(player)
+            return tournament
+            
+        def get_tournaments(self):
+            return self.tournaments
+        
+        def save_tournaments_to_file(self):
+            tournaments = [self.serialize_tournament(tournament) for tournament in self.tournaments]
+            filepath = os.path.join(TOURNOIS_DIR, "tournois.json")
 
-        self.tournaments.append(tournament)
-        self.save_tournaments_to_file()
-        return tournament
-    
-    def get_tournaments(self):
-        return self.tournaments
+            with open(filepath, "w") as file:
+                json.dump(tournaments, file, indent=4, default=datetime_to_string)
 
-    def display_tournaments(self):
-        print("Liste des tournois :")
-        for tournament in self.tournaments:
-            print(f"Nom: {tournament.name}")
-            print(f"Lieu: {tournament.location}")
-            print(f"Date de début: {tournament.start_date.strftime('%d/%m/%Y')}")
-            print(f"Date de fin: {tournament.end_date.strftime('%d/%m/%Y')}")
-            print(f"Nombre de rounds: {tournament.number_of_rounds}")
-            print("Joueurs inscrits:")
-            for player in tournament.players:
-                print(f" - {player.first_name} {player.last_name} (ID: {player.chess_id})")
-            print("=" * 40)
-    
-    def save_tournaments_to_file(self):
-        tournaments = [self.serialize_tournament(tournament) for tournament in self.tournaments]
-        filepath = os.path.join(TOURNOIS_DIR, "tournois.json")
+        def load_tournaments_from_file(self):
+            filepath = os.path.join(TOURNOIS_DIR, "tournois.json")
+            if os.path.isfile(filepath):
+                with open(filepath, "r") as file:
+                    try:
+                        tournaments_data = json.load(file)
 
-        with open(filepath, "w") as file:
-            json.dump(tournaments, file, indent=4, default=datetime_to_string)
+                        tournaments = []
+                        for tournament_data in tournaments_data:
+                            tournament = self.deserialize_tournament(tournament_data)
+                            tournaments.append(tournament)
 
+                        self.tournaments = tournaments
+                    except json.JSONDecodeError:
+                        print("Erreur lors du chargement des données des tournois. Le fichier peut être vide.")
+            else:
+                print("Le fichier des tournois n'existe pas. Aucun tournoi enregistré.")
 
-    def load_tournaments_from_file(self):
-        filepath = os.path.join(TOURNOIS_DIR, "tournois.json")
-        if os.path.isfile(filepath):
-            with open(filepath, "r") as file:
-                try:
-                    tournaments_data = json.load(file)
-                    if isinstance(tournaments_data, list):  # Check if data is a list
-                        self.tournaments = [self.deserialize_tournament(tournament_data) for tournament_data in tournaments_data]
-                except (json.JSONDecodeError, KeyError):
-                    print("Erreur lors du chargement des données des tournois. Le fichier peut être vide ou malformé.")
-        else:
-            print("Le fichier des tournois n'existe pas. Une nouvelle liste de tournois sera créée.")
+        def generate_tournament_id(self):
+                tournament_count = len(self.tournaments)
+                tournament_id = f"T{tournament_count + 1}"
+                return tournament_id
 
+        def serialize_tournament(self, tournament):
+                if isinstance(tournament, Tournament):
+                    return {
+                        "tournament_id": tournament.tournament_id,
+                        "name": tournament.name,
+                        "location": tournament.location,
+                        "start_date": tournament.start_date.strftime("%d/%m/%Y"),
+                        "end_date": tournament.end_date.strftime("%d/%m/%Y"),
+                        "number_of_rounds": tournament.number_of_rounds,
+                        "players": [player.chess_id for player in tournament.players]
+                    }
+                raise TypeError(f"Object of type {tournament.__class__.__name__} is not JSON serializable")
 
-    def generate_tournament_id(self):
-        tournament_count = len(self.tournaments)
-        tournament_id = f"T{tournament_count + 1}"
-        return tournament_id
-
-    def serialize_tournament(self, tournament):
-        if isinstance(tournament, Tournament):
-            return {
-                "tournament_id": tournament.tournament_id,
-                "name": tournament.name,
-                "location": tournament.location,
-                "start_date": tournament.start_date.strftime("%d/%m/%Y"),
-                "end_date": tournament.end_date.strftime("%d/%m/%Y"),
-                "number_of_rounds": tournament.number_of_rounds,
-                "players": [player.chess_id for player in tournament.players]
-            }
-        raise TypeError(f"Object of type {tournament.__class__.__name__} is not JSON serializable")
-
-    def deserialize_tournament(self, tournament_data):
-        return Tournament(
-            tournament_data["tournament_id"],
-            tournament_data["name"],
-            tournament_data["location"],
-            datetime.strptime(tournament_data["start_date"], "%d/%m/%Y"),
-            datetime.strptime(tournament_data["end_date"], "%d/%m/%Y"),
-            tournament_data.get("number_of_rounds", 4)
-        )
+        def deserialize_tournament(self, tournament_data):
+                return Tournament(
+                    tournament_data["tournament_id"],
+                    tournament_data["name"],
+                    tournament_data["location"],
+                    datetime.strptime(tournament_data["start_date"], "%d/%m/%Y"),
+                    datetime.strptime(tournament_data["end_date"], "%d/%m/%Y"),
+                    tournament_data.get("number_of_rounds", 4)
+                )
 
 def datetime_to_string(obj):
     if isinstance(obj, datetime):

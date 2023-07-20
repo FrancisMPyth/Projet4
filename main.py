@@ -4,13 +4,17 @@ import json
 from datetime import datetime
 from controllers import PlayerController, TournamentController
 from views import PlayerListView, TournamentCreationView, TournamentListView
+from models import Player, Tournament
+
+
 
 def main():
     player_controller = PlayerController()
-    tournament_controller = TournamentController()
-    tournament_creation_view = TournamentCreationView()
+    tournament_controller = TournamentController(player_controller)
+
+    player_list_view = PlayerListView()
+    tournament_creation_view = TournamentCreationView(tournament_controller, player_controller)  
     tournament_list_view = TournamentListView()
-    player_list_view = PlayerListView()  # Ajouter cette ligne pour créer l'instance de la classe PlayerListView
 
     while True:
         print("Menu Principal:")
@@ -24,13 +28,14 @@ def main():
         choice = input("Entrez votre choix : ")
 
         if choice == "1":
-            player_list_view.create_player(player_controller)  # Utiliser create_player pour enregistrer un joueur
+            player_list_view.create_player(player_controller)
         elif choice == "2":
-            player_list_view.display_player_list(player_controller)  # Utiliser display_player_list pour afficher la liste des joueurs
+            player_list_view.display_player_list(player_controller)
         elif choice == "3":
-            tournament_creation_view.create_tournament(tournament_controller)
+            tournament_creation_view.create_tournament()
         elif choice == "4":
             tournament_list_view.display_tournaments(tournament_controller)
+            input("Appuyez sur une touche pour continuer...")
         elif choice == "5":
             while True:
                 print("\nGestion des Tournois:")
@@ -48,7 +53,7 @@ def main():
                         break
                     tournament = tournament_controller.select_tournament(tournament_id)
                     if tournament is not None:
-                        tournament_list_view.display_players(tournament)
+                        tournament_list_view.display_players(tournament_controller, tournament)
                 elif sub_choice == "2":
                     tournament_list_view.display_tournaments(tournament_controller)
                     tournament_id = input("Spécifiez l'identifiant du tournoi ('q' pour quitter) : ")

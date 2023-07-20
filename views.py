@@ -43,31 +43,65 @@ class PlayerListView:
             print(f"Date de naissance: {player.date_of_birth.strftime('%d/%m/%Y')}")
             print(f"Identifiant: {player.chess_id}")
             print(f"Identifiant national d'échecs: {player.national_chess_id}\n")
-            
+                
 class TournamentCreationView:
-    
-    def create_tournament(self, name, location, start_date, end_date, number_of_rounds=4):
-        tournament_id = self.generate_tournament_id()
-        start_date = datetime.strptime(start_date, "%d/%m/%Y")  # Convertir en objet datetime
-        end_date = datetime.strptime(end_date, "%d/%m/%Y")  # Convertir en objet datetime
+    def __init__(self, tournament_controller, player_controller):
+        self.tournament_controller = tournament_controller
+        self.player_controller = player_controller
 
-        tournament = Tournament(tournament_id, name, location, start_date, end_date, number_of_rounds)
+    def generate_chess_id(self, players):
+        existing_ids = [player.chess_id for player in players]
+        max_id = max(existing_ids, default="J0")
+        match = re.match(r"J(\d+)", max_id)
+        if match:
+            next_id = int(match.group(1)) + 1
+        else:
+            next_id = 1
+        return f"J{next_id:03d}"
 
-        player_ids = input("Entrez les identifiants des joueurs séparés par des virgules : ").split(",")
-        for player_id in player_ids:
-            player = self.player_controller.select_player(player_id.strip())
-            if player:
-                tournament.add_player(player)  # Ajouter le joueur au tournoi
+    def get_players_selection(self):
+        players = self.player_controller.get_players()
+
+        print("Liste des joueurs disponibles :")
+        for i, player in enumerate(players, 1):
+            print(f"{i}. {player.first_name} {player.last_name} (ID: {player.chess_id})")
+
+        selected_players = []
+        while True:
+            player_id_input = input("Sélectionnez l'ID du joueur à ajouter au tournoi (ou appuyez sur Entrée pour terminer) : ")
+            if not player_id_input:
+                break
+
+            selected_player = self.player_controller.select_player(player_id_input)
+            if selected_player:
+                selected_players.append(selected_player)
             else:
-                print(f"Le joueur avec l'identifiant '{player_id}' n'a pas été trouvé. Veuillez vérifier l'identifiant.")
+                print("ID de joueur invalide. Veuillez réessayer.")
 
-        self.tournaments.append(tournament)
-        self.save_tournaments_to_file()
-        return tournament
+        return selected_players
+    def create_tournament(self):
+        print("Enregistrer un tournoi :")
+        name = input("Nom du tournoi : ")
+        location = input("Lieu du tournoi : ")
+        start_date_str = input("Date de début (jj/mm/aaaa) : ")
+        end_date_str = input("Date de fin (jj/mm/aaaa) : ")
 
+        try:
+            number_of_rounds = int(input("Nombre de rounds (par défaut 4) : ") or 4)
+
+            self.tournament_controller.create_tournament(name, location, start_date_str, end_date_str, number_of_rounds)
+            print("Tournoi enregistré avec succès!\n")
+        except ValueError:
+            print("Format de date ou nombre de rounds incorrect. Assurez-vous de saisir les informations correctement.")
+    
 class TournamentListView:
     def display_tournaments(self, tournament_controller):
-        tournaments = tournament_controller.get_tournaments()
+        tournaments = tournament_controller.get_tournaments()  
+        
+        if not tournaments:
+            print("Aucun tournoi enregistré.")
+            return
+        
         print("Liste des tournois :")
         for tournament in tournaments:
             print(f"Identifiant : {tournament.tournament_id}")
@@ -83,24 +117,16 @@ class TournamentListView:
                     print(f" - {player.first_name} {player.last_name} (ID: {player.chess_id})")
             print("=" * 40)
 
+    def display_tournament_details(self, tournament):  # Renommer cette méthode pour éviter le conflit
+        print(f"Détails du tournoi '{tournament.name}' :")
+        # ... (afficher les détails du tournoi) ...
+
     def display_players(self, tournament_controller, tournament):
         print(f"Joueurs inscrits au tournoi '{tournament.name}' :")
         for player_id in tournament.players:
             player = tournament_controller.player_controller.select_player(player_id)
             if player:
                 print(f"  - {player.first_name} {player.last_name}")
-        print()
-
-    def display_tournament_details(self, tournament):
-        print(f"Détails du tournoi '{tournament.name}' :")
-        print(f"Identifiant : {tournament.tournament_id}")
-        print(f"Lieu : {tournament.location}")
-        print(f"Début : {tournament.start_date.strftime('%d/%m/%Y')}")
-        print(f"Fin : {tournament.end_date.strftime('%d/%m/%Y')}")
-        print(f"Nombre de rounds : {tournament.number_of_rounds}")
-        print(f"Joueurs inscrits ({len(tournament.players)} sur {tournament.number_of_players}) :")
-        for player in tournament.players:
-            print(f"  - {player.first_name} {player.last_name}")
         print()
 
     def save_tournament_to_file(self, tournament):
