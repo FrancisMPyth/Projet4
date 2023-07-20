@@ -10,6 +10,7 @@ def main():
     tournament_controller = TournamentController()
     tournament_creation_view = TournamentCreationView()
     tournament_list_view = TournamentListView()
+    player_list_view = PlayerListView()  # Ajouter cette ligne pour créer l'instance de la classe PlayerListView
 
     while True:
         print("Menu Principal:")
@@ -23,9 +24,9 @@ def main():
         choice = input("Entrez votre choix : ")
 
         if choice == "1":
-            player_creation_view.create_player(player_controller)
+            player_list_view.create_player(player_controller)  # Utiliser create_player pour enregistrer un joueur
         elif choice == "2":
-            player_list_view.display_player_list(player_controller)
+            player_list_view.display_player_list(player_controller)  # Utiliser display_player_list pour afficher la liste des joueurs
         elif choice == "3":
             tournament_creation_view.create_tournament(tournament_controller)
         elif choice == "4":
