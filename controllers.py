@@ -70,11 +70,11 @@ class PlayerController:
             print("Le fichier des joueurs n'existe pas. Une nouvelle liste de joueurs sera créée.")
 
 class TournamentController:
-        def __init__(self, player_controller):
-            self.player_controller = player_controller
-            self.load_tournaments_from_file()
+    def __init__(self, player_controller):
+        self.player_controller = player_controller
+        self.tournaments = self.load_tournaments_from_file()
 
-        def create_tournament(self, name, location, start_date_str, end_date_str, number_of_rounds):
+    def create_tournament(self, name, location, start_date_str, end_date_str, number_of_rounds):
             try:
                 start_date = datetime.strptime(start_date_str, "%d/%m/%Y")  
                 end_date = datetime.strptime(end_date_str, "%d/%m/%Y")  
@@ -89,40 +89,39 @@ class TournamentController:
 
             return tournament
             
-        def get_tournaments(self):
+    def get_tournaments(self):
             return self.tournaments
         
-        def save_tournaments_to_file(self):
+    def save_tournaments_to_file(self):
             tournaments = [self.serialize_tournament(tournament) for tournament in self.tournaments]
             filepath = os.path.join(TOURNOIS_DIR, "tournois.json")
 
             with open(filepath, "w") as file:
                 json.dump(tournaments, file, indent=4, default=datetime_to_string)
 
-        def load_tournaments_from_file(self):
-            filepath = os.path.join(TOURNOIS_DIR, "tournois.json")
-            if os.path.isfile(filepath):
-                with open(filepath, "r") as file:
-                    try:
-                        tournaments_data = json.load(file)
+    def load_tournaments_from_file(self):
+        filepath = os.path.join(TOURNOIS_DIR, "tournois.json")
+        if os.path.isfile(filepath):
+            with open(filepath, "r") as file:
+                try:
+                    tournaments_data = json.load(file)
+                    tournaments = []
+                    for tournament_data in tournaments_data:
+                        tournament = self.deserialize_tournament(tournament_data)
+                        tournaments.append(tournament)
+                    return tournaments
+                except json.JSONDecodeError:
+                    print("Erreur lors du chargement des données des tournois. Le fichier peut être vide.")
+        else:
+            print("Le fichier des tournois n'existe pas. Aucun tournoi enregistré.")
+            return []
 
-                        tournaments = []
-                        for tournament_data in tournaments_data:
-                            tournament = self.deserialize_tournament(tournament_data)
-                            tournaments.append(tournament)
-
-                        self.tournaments = tournaments
-                    except json.JSONDecodeError:
-                        print("Erreur lors du chargement des données des tournois. Le fichier peut être vide.")
-            else:
-                print("Le fichier des tournois n'existe pas. Aucun tournoi enregistré.")
-
-        def generate_tournament_id(self):
+    def generate_tournament_id(self):
                 tournament_count = len(self.tournaments)
                 tournament_id = f"T{tournament_count + 1}"
                 return tournament_id
 
-        def serialize_tournament(self, tournament):
+    def serialize_tournament(self, tournament):
                 if isinstance(tournament, Tournament):
                     return {
                         "tournament_id": tournament.tournament_id,
@@ -135,7 +134,7 @@ class TournamentController:
                     }
                 raise TypeError(f"Object of type {tournament.__class__.__name__} is not JSON serializable")
 
-        def deserialize_tournament(self, tournament_data):
+    def deserialize_tournament(self, tournament_data):
                 return Tournament(
                     tournament_data["tournament_id"],
                     tournament_data["name"],
