@@ -7,7 +7,6 @@ from views import PlayerListView, TournamentCreationView, TournamentListView
 from models import Player, Tournament
 
 
-
 def main():
     player_controller = PlayerController()
     tournament_controller = TournamentController(player_controller)
