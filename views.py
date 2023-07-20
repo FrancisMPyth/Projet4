@@ -43,7 +43,7 @@ class PlayerListView:
             print(f"Date de naissance: {player.date_of_birth.strftime('%d/%m/%Y')}")
             print(f"Identifiant: {player.chess_id}")
             print(f"Identifiant national d'échecs: {player.national_chess_id}\n")
-                
+
 class TournamentCreationView:
     def __init__(self, tournament_controller, player_controller):
         self.tournament_controller = tournament_controller
@@ -79,6 +79,7 @@ class TournamentCreationView:
                 print("ID de joueur invalide. Veuillez réessayer.")
 
         return selected_players
+
     def create_tournament(self):
         print("Enregistrer un tournoi :")
         name = input("Nom du tournoi : ")
@@ -89,19 +90,21 @@ class TournamentCreationView:
         try:
             number_of_rounds = int(input("Nombre de rounds (par défaut 4) : ") or 4)
 
-            self.tournament_controller.create_tournament(name, location, start_date_str, end_date_str, number_of_rounds)
+            selected_players = self.get_players_selection()
+
+            self.tournament_controller.create_tournament(name, location, start_date_str, end_date_str, number_of_rounds, selected_players)
             print("Tournoi enregistré avec succès!\n")
         except ValueError:
             print("Format de date ou nombre de rounds incorrect. Assurez-vous de saisir les informations correctement.")
-    
+
 class TournamentListView:
     def display_tournaments(self, tournament_controller):
-        tournaments = tournament_controller.get_tournaments()  
-        
+        tournaments = tournament_controller.get_tournaments()
+
         if not tournaments:
             print("Aucun tournoi enregistré.")
             return
-        
+
         print("Liste des tournois :")
         for tournament in tournaments:
             print(f"Identifiant : {tournament.tournament_id}")
@@ -150,3 +153,4 @@ class TournamentListView:
                 ]
             }
             json.dump(tournament_data, file, indent=4)
+
