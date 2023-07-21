@@ -120,9 +120,8 @@ class TournamentListView:
                     print(f" - {player.first_name} {player.last_name} (ID: {player.chess_id})")
             print("=" * 40)
 
-    def display_tournament_details(self, tournament):  # Renommer cette méthode pour éviter le conflit
+    def display_tournament_details(self, tournament):  
         print(f"Détails du tournoi '{tournament.name}' :")
-        # ... (afficher les détails du tournoi) ...
 
     def display_players(self, tournament_controller, tournament):
         print(f"Joueurs inscrits au tournoi '{tournament.name}' :")
